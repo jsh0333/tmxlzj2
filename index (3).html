@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>대형 폐기물 스티커 비용 계산기</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { font-size: 24px; margin-bottom: 10px; }
+    h2 { font-size: 18px; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    .total { 
+      position: fixed; top: 0; right: 0; 
+      background: #2563eb; color: white; 
+      padding: 10px 20px; border-bottom-left-radius: 10px;
+      font-size: 18px;
+    }
+    .preview {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 2px solid #ccc;
+      padding: 10px; max-height: 50vh; overflow-y: auto;
+      display: none;
+    }
+    .btn { padding: 5px 10px; margin: 0 2px; }
+  </style>
+</head>
+<body>
+  <div class="total" id="total">총 합계: 0 원</div>
+
+  <h1>대형 폐기물 스티커 비용 계산기</h1>
+  <button onclick="togglePreview()">미리보기</button>
+
+  <div id="categories"></div>
+
+  <div class="preview" id="preview">
+    <h2>미리보기</h2>
+    <div id="preview-list"></div>
+    <div class="total"><b id="preview-total">총 합계: 0 원</b></div>
+  </div>
+
+  <script>
+    const categories = {
+      "가구류": [
+        { name: "침대(싱글)", price: 5000 },
+        { name: "침대(더블/퀸/킹)", price: 10000 },
+        { name: "장롱(소)", price: 7000 },
+        { name: "장롱(중)", price: 10000 },
+        { name: "장롱(대)", price: 15000 },
+        { name: "책상", price: 5000 },
+        { name: "의자", price: 2000 },
+        { name: "소파(1인)", price: 5000 },
+        { name: "소파(3인)", price: 12000 },
+        { name: "식탁(4인)", price: 7000 },
+        { name: "식탁(6인)", price: 12000 },
+      ],
+      "중·소형 가전제품": [
+        { name: "냉장고(소)", price: 10000 },
+        { name: "냉장고(대)", price: 15000 },
+        { name: "세탁기", price: 10000 },
+        { name: "건조기", price: 8000 },
+        { name: "TV(소)", price: 5000 },
+        { name: "TV(대)", price: 10000 },
+        { name: "청소기", price: 3000 },
+        { name: "전자레인지", price: 3000 },
+      ],
+      "기타": [
+        { name: "자전거", price: 5000 },
+        { name: "러닝머신", price: 15000 },
+        { name: "안마의자", price: 20000 },
+        { name: "장식장", price: 8000 },
+        { name: "옷걸이", price: 2000 },
+        { name: "행거", price: 3000 },
+      ]
+    };
+
+    const items = {};
+
+    function renderCategories() {
+      const container = document.getElementById("categories");
+      container.innerHTML = "";
+      for (let category in categories) {
+        const section = document.createElement("div");
+        section.innerHTML = `<h2>${category}</h2>`;
+        let table = `<table><thead><tr>
+          <th>품목</th><th>금액</th><th>수량</th><th>합계</th>
+        </tr></thead><tbody>`;
+        categories[category].forEach(item => {
+          const key = `${category}-${item.name}`;
+          items[key] = 0;
+          table += `<tr id="row-${key}">
+            <td>${item.name}</td>
+            <td>${item.price.toLocaleString()} 원</td>
+            <td>
+              <button class="btn" onclick="updateItem('${key}', -1)">-</button>
+              <span id="qty-${key}">0</span>
+              <button class="btn" onclick="updateItem('${key}', 1)">+</button>
+            </td>
+            <td id="sum-${key}">0 원</td>
+          </tr>`;
+        });
+        table += "</tbody></table>";
+        section.innerHTML += table;
+        container.appendChild(section);
+      }
+    }
+
+    function updateItem(key, delta) {
+      items[key] = Math.max(0, items[key] + delta);
+      document.getElementById("qty-" + key).innerText = items[key];
+      const [category, itemName] = key.split("-");
+      const item = categories[category].find(i => i.name === itemName);
+      document.getElementById("sum-" + key).innerText =
+        (item.price * items[key]).toLocaleString() + " 원";
+      updateTotal();
+    }
+
+    function updateTotal() {
+      let total = 0;
+      let previewHTML = "";
+      for (let key in items) {
+        if (items[key] > 0) {
+          const [category, itemName] = key.split("-");
+          const item = categories[category].find(i => i.name === itemName);
+          total += item.price * items[key];
+          previewHTML += `<div>[${category}] ${itemName} × ${items[key]} 
+            → ${(item.price * items[key]).toLocaleString()} 원</div>`;
+        }
+      }
+      document.getElementById("total").innerText = "총 합계: " + total.toLocaleString() + " 원";
+      document.getElementById("preview-list").innerHTML = previewHTML || "선택된 품목 없음";
+      document.getElementById("preview-total").innerText = "총 합계: " + total.toLocaleString() + " 원";
+    }
+
+    function togglePreview() {
+      const preview = document.getElementById("preview");
+      preview.style.display = (preview.style.display === "none" || preview.style.display === "") ? "block" : "none";
+    }
+
+    renderCategories();
+  </script>
+</body>
+</html>
